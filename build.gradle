@@ -1,0 +1,96 @@
+buildscript {
+	ext {
+		springBootVersion = '2.1.5.RELEASE'
+		springCloudVersion = 'Greenwich.SR1'
+		springBootVersionLatest = '2.1.9.RELEASE'
+		springCloudVersionLatest = 'Greenwich.SR3'
+		springfoxVersion = '3.0.0-SNAPSHOT'
+		baseRepoUrl = 'http://maven.aliyun.com/repository'
+		repoUsername = 'NlrxWZ'
+		repoPassword = 'zDuj5s8gHt'
+    }
+	repositories {
+		maven { url "${baseRepoUrl}/public/" }
+		mavenCentral()
+	}
+		
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersionLatest}")
+    }
+}
+
+subprojects { project ->
+
+    apply plugin: 'maven'
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'io.spring.dependency-management'
+
+	dependencies {
+		implementation 'org.projectlombok:lombok:1.18.8'
+		annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    }
+    // JDK版本
+    def jdkVersion = 1.8
+    sourceCompatibility = jdkVersion
+    targetCompatibility = jdkVersion
+	
+    // 版本信息
+    group = "com.zippo.design.patten"
+    version = "1.0.0"
+
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = 1.8
+        options.encoding = "UTF-8"
+    }
+    tasks.withType(Test) {
+        defaultCharacterEncoding = "UTF-8"
+    }
+
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allJava
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersionLatest}"
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersionLatest}"
+        }
+    }
+
+    // 发布JAR包
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+            }
+        }
+        repositories {
+            maven {
+                name = 'private'
+                url "${baseRepoUrl}/111723-${version.endsWith('-SNAPSHOT') ? 'snapshot-nMLuKl' : 'release-pCxAmx'}"
+                credentials {
+                    username = "${repoUsername}"
+                    password = "${repoPassword}"
+                }
+            }
+        }
+    }
+	
+	configurations {
+		if (!name.startsWith('beta-')) {
+			implementation.exclude module: 'spring-boot-starter-tomcat'
+		} 
+        all {
+            // 缓存策略，时间单位：'seconds', 'minutes', etc.
+            resolutionStrategy {
+				// 动态版本
+				cacheDynamicVersionsFor 10, 'minutes'
+				// 变化模块，不缓存
+				cacheChangingModulesFor 0, 'seconds'
+            }
+        }
+    }
+}

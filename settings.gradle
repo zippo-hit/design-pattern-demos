@@ -1,0 +1,6 @@
+rootProject.name = 'design-patten'
+include 'bridge'
+include 'decorator'
+include 'mediator'
+
+
